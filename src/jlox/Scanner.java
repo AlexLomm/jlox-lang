@@ -93,8 +93,10 @@ class Scanner {
       // special handling is needed because comments begin with '/' too
       case '/':
         if (match('/')) {
-          // A comment goes until the end of the line.
+          // A comment goes until the end of the line
           while (peek() != '\n' && !isAtEnd()) advance();
+        } else if (match('*')) {
+          skipMultilineComment();
         } else {
           addToken(TokenType.SLASH);
         }
@@ -193,6 +195,26 @@ class Scanner {
     String value = source.substring(start + 1, current - 1);
 
     addToken(TokenType.STRING, value);
+  }
+
+
+  private void skipMultilineComment() {
+    // A block comment goes until the end of the closing token '*/'
+    while (!isAtEnd()) {
+      if (peek() == '*' && peekNext() == '/') break;
+
+      if (peek() == '\n') line++;
+
+      advance();
+    }
+
+    if (isAtEnd()) {
+      Lox.error(line, "Unterminated comment.");
+      return;
+    }
+
+    advance();
+    advance();
   }
 
   private char peek() {
